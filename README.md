@@ -5,6 +5,7 @@ output:
     keep_md: true
 ---
 
+<<<<<<< HEAD
 
 
 ## GitHub Documents
@@ -37,3 +38,7 @@ You can also embed plots, for example:
 ![](Untitled_files/figure-html/pressure-1.png)<!-- -->
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+=======
+테스트 작성 
+테스트 작성2
+>>>>>>> 335679138758d7d51344d4fd8e17b3f46ef75b13
