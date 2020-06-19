@@ -13,6 +13,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 ## GitHub Documents
 
 This is an R Markdown format used for publishing markdown documents to GitHub. When you click the **Knit** button all R code chunks are run and a markdown file (.md) suitable for publishing to GitHub is generated.
@@ -22,8 +23,8 @@ This is an R Markdown format used for publishing markdown documents to GitHub. W
 You can include R code in the document as follows:
 
 ```{r cars}
-sdot_20200501<- read.csv("file/ALLDATA_20200501.csv", head = TRUE, fileEncoding = 'euc-kr')
-summary(sdot_20200501)
+tsv<-read.csv("data/sdot_20200507.csv", fileEncoding = 'euc-kr')
+summary(tsv)
 ```
 
 ## Including Plots
