@@ -109,7 +109,7 @@ sdot_model <- sdot_model %>% group_by(gover, model, hour) %>% summarise(long = m
 
 지도정보 불러오기 :  
 
-```{r pressure, echo=FALSE, warning= FALSE}
+```{r, warning= FALSE }
 
 p<- read.any("data/sample.csv", header = TRUE) #시각화할 데이터셋
 
@@ -141,20 +141,12 @@ split_data_poly = lapply(unique(P_merge$group), function(x) {
 #split_data_poly
 data_polys = SpatialPolygons(split_data_poly)
 
+
+#지도에 SDOT 설치 정보 뿌리기
 leaflet(data_polys) %>%
   setView(lng=126.9784, lat=37.566, zoom=11) %>%
   addPolygons(fillColor = "white",weight ="2",color = "black", opacity = 0.8   ) %>% 
   addProviderTiles('CartoDB.Positron') %>% 
   addCircleMarkers(data = sdot_model, lng=~long, lat=~lat, color="#20639B", radius = "2",stroke = TRUE, fillOpacity = 0.8, weight =1)
 
-
-
-
-
-
-
-
-plot(pressure)
 ```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
