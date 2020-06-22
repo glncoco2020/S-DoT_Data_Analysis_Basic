@@ -27,8 +27,8 @@ sdot<-read.csv("data/sdot_20200507.csv", fileEncoding = 'euc-kr', head=TRUE, che
 
 
 ```{r, layout="l-body-outset"}
-library(knitr)
-kable(head(sdot))
+library(rmarkdown)
+paged_table(sdot)
 ```
 
 
