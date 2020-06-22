@@ -1,0 +1,59 @@
+---
+title: "README"
+output: 
+  html_document:
+    keep_md: true
+---
+
+
+```{r setup, include=FALSE, warning=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+library(DT)
+```
+
+## GitHub Documents
+
+This is an R Markdown format used for publishing markdown documents to GitHub. When you click the **Knit** button all R code chunks are run and a markdown file (.md) suitable for publishing to GitHub is generated.
+
+## 데이터 불러오기
+
+S-Dot 1시간 측정 평균값이 저장된 csv파일 read
+```{r }
+#분석하고자 하는 csv데이터를 sdot이라는 데이터 프레임에 넣기 
+sdot<-read.csv("data/sdot_20200507.csv", fileEncoding = 'euc-kr', head=TRUE, check.names=FALSE) 
+
+```
+
+
+```{r }
+#명령어 summary(데이터프레임)
+library(knitr)
+kable(head(sdot))
+
+```
+
+
+
+sdot에 저장된 값에 대한 데이터 요약 
+```{r }
+#명령어 summary(데이터프레임)
+summary(sdot) 
+
+
+
+```
+위의 값을 확인 했을때 미세먼지보정,초미세먼지 보정 등 최소 측정 값인 0을 벗어나는 음수(마이너스)값 확인 후 제거  
+
+```{r }
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
