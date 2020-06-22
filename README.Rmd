@@ -7,9 +7,9 @@ output:
 
 
 ```{r setup, include=FALSE, warning=FALSE}
-
 knitr::opts_chunk$set(echo = TRUE)
 library(DT)
+library(dplyr)
 ```
 
 ## GitHub Documents
@@ -28,6 +28,7 @@ sdot<-read.csv("data/sdot_20200507.csv", fileEncoding = 'euc-kr', head=TRUE, che
 
 ```{r, layout="l-body-outset"}
 library(rmarkdown)
+#데이터 중 위에서부터 100개의 데이터만 확인
 paged_table(sdot) %>% head(100)
 ```
 
@@ -37,14 +38,44 @@ sdot에 저장된 값에 대한 데이터 요약
 ```{r }
 #명령어 summary(데이터프레임)
 summary(sdot) 
-
-
-
 ```
-위의 값을 확인 했을때 미세먼지보정,초미세먼지 보정 등 최소 측정 값인 0을 벗어나는 음수(마이너스)값 확인 후 제거  
+위의 값을 확인 했을때 현재 살펴보고자 하는 미세먼지, 초미세먼지 결측값, 음수, 0값을 제거 
 
 ```{r }
+# 분석 편의상 컬럼 이름 변경 
+sdot <- sdot %>% dplyr::rename(superdust =`초미세먼지 보정 (㎍/㎥)`)
+sdot <- sdot %>% dplyr::rename(dust =`미세먼지 보정 (㎍/㎥)`)
+
+# Na또는 Nan등 결측값 확인 
+sum(is.na(sdot)) 
+
 ```
+0개 
+
+```{r }
+#미세먼지 값이 0이하 or 초미세먼지 값이 0 이하 값 제거
+sdot <-sdot %>% filter(!superdust <=0 , !dust <=0)
+
+
+#명령어 summary(데이터프레임)로 미세먼지 보정, 초미세먼지 보정 값 재확인 
+summary(sdot) 
+#결측값 및 0이하 값 제거 확인
+```
+
+```{r, warning= FALSE }
+#시간에 따른 미세먼지 값 확인 
+library(plotly)
+
+plot_ly(sdot, x = ~hour, y = sdot$dust, name = 'trace 0', type = 'scatter', mode = 'markers',
+        marker = list(opacity = 0.4, color = "blue"))
+
+plot_ly(sdot, x = ~hour, y = sdot$superdust, name = 'trace 0', type = 'scatter', mode = 'markers',
+        marker = list(opacity = 0.4, color = "red"))
+
+
+```
+
+
 
 ## Including Plots
 
