@@ -24,7 +24,6 @@ sdot<-read.csv("data/sdot_20200507.csv", fileEncoding = 'euc-kr', head=TRUE, che
 
 
 ```r
-#명령어 summary(데이터프레임)
 library(knitr)
 kable(head(sdot))
 ```

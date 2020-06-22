@@ -375,8 +375,7 @@ summary {
 <p>S-Dot 1시간 측정 평균값이 저장된 csv파일 read</p>
 <pre class="r"><code>#분석하고자 하는 csv데이터를 sdot이라는 데이터 프레임에 넣기 
 sdot&lt;-read.csv(&quot;data/sdot_20200507.csv&quot;, fileEncoding = 'euc-kr', head=TRUE, check.names=FALSE) </code></pre>
-<pre class="r"><code>#명령어 summary(데이터프레임)
-library(knitr)
+<pre class="r"><code>library(knitr)
 kable(head(sdot))</code></pre>
 <table>
 <thead>
