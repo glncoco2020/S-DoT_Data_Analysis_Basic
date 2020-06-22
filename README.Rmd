@@ -28,7 +28,7 @@ sdot<-read.csv("data/sdot_20200507.csv", fileEncoding = 'euc-kr', head=TRUE, che
 
 ```{r, layout="l-body-outset"}
 library(rmarkdown)
-paged_table(sdot) %>% head(1000)
+paged_table(sdot) %>% head(100)
 ```
 
 
