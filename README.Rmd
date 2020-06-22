@@ -110,23 +110,26 @@ sdot_model <- sdot_model %>% group_by(gover, model, hour) %>% summarise(long = m
 지도정보 불러오기 :  
 
 ```{r, warning= FALSE }
-
+#서울시/자치구/이름 파일 
 p<- read.any("data/sample.csv", header = TRUE) #시각화할 데이터셋
 
+#대한민국 시군구 행정구역 shp파일 
 map =readOGR('data/TL_SCCO_SIG.shp',encoding = 'cp949')
 
+#행정구역 shp 전처리
 map <- spTransform(map, CRSobj = CRS('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs'))
 map@polygons[[1]]@Polygons[[1]]@coords %>% head(n = 10L)
 new_map <- fortify(map, region = 'SIG_CD')
-
 new_map$id <- as.numeric(new_map$id)
+
+#대한민국 시군구 행정구역 중 서울시만 불러오기 
 seoul_map <- new_map[new_map$id <= 11740,]
 
+#서울시 자치구 이름 표기 정보 결합
 P_merge <- merge(seoul_map, p, by='id')
 P_merge <- P_merge %>% dplyr::rename(gover = 시군구명)
 
 top_stat_sdot<-sdot_model %>% group_by(gover, hour) %>% summarise(dust = mean(dust), super_dust = mean(super_dust))
-
 top_merge<-merge(P_merge, top_stat_sdot, by="gover", all.x =TRUE)
 
 
@@ -145,8 +148,83 @@ data_polys = SpatialPolygons(split_data_poly)
 #테스트버전
 leaflet(data_polys) %>%
   setView(lng=126.9784, lat=37.566, zoom=11) %>%
+  #자치구 경계선 
   addPolygons(fillColor = "white",weight ="2",color = "black", opacity = 0.8   ) %>% 
+  #맵 스타일 
   addProviderTiles('CartoDB.Positron') %>% 
+  #sdot_model에 담겨있는 위치정보를 맵에 보여주기 
   addCircleMarkers(data = sdot_model, lng=~long, lat=~lat, color="#20639B", radius = "2",stroke = TRUE, fillOpacity = 0.8, weight =1)
 
+
+```
+
+
+```{r, warning= FALSE }
+# 미세먼지 값 표시하기
+# 미세먼지 범례설정 
+sdot_model$dust_range <- cut(sdot_model$dust, 
+                             c(0,30,80,150,999), include.lowest = T,
+                             labels = c('0','15','35','75'))
+colors_sdot <- c("#3982BA", "#66B74F", "#FAE284", "#E93A30")
+dust_color_sdot <- colorFactor(palette = colors_sdot , sdot_model$dust_range)
+
+
+# 초미세먼지 범례설정
+sdot_model$super_dust_range <- cut(sdot_model$super_dust, 
+                             c(0,15,35,75,999), include.lowest = T,
+                             labels = c('0','15','35','75'))
+colors_sdot <- c("#3982BA", "#66B74F", "#FAE284", "#E93A30")
+super_dust_color_sdot <- colorFactor(palette = colors_sdot , sdot_model$super_dust_range)
+
+
+
+
+#범례 커스텀 옵션
+addLegendCustom <- function(map, position, colors, labels, sizes, opacity = 0.5, title){
+  colorAdditions <- paste0(colors, "; border-radius: 50%; width:", sizes, "px; height:", sizes, "px")
+  labelAdditions <- paste0("<div style='display: inline-block;height: ", 
+                           sizes, "px;margin-top: 4px;line-height: ", sizes, "px;'>", 
+                           labels, "</div>")
+  
+  return(addLegend(map, position = "bottomright",
+                   colors = colorAdditions, 
+                   labels = labelAdditions, opacity = opacity, title = title))
+}
+
+
+
+# 일별 
+mean_sdot_model <- sdot_model %>% group_by(model) %>% summarise(super_dust =mean(super_dust), dust = mean(dust), long = mean(long), lat = mean(lat))
+
+# 일별 미세먼지 범례설정 
+mean_sdot_model$dust_range <- cut(mean_sdot_model$dust, 
+                             c(0,30,80,150,999), include.lowest = T,
+                             labels = c('0','15','35','75'))
+colors_sdot <- c("#3982BA", "#66B74F", "#FAE284", "#E93A30")
+dust_color_sdot <- colorFactor(palette = colors_sdot , mean_sdot_model$dust_range)
+
+
+# 일별 초미세먼지 범례설정
+mean_sdot_model$super_dust_range <- cut(mean_sdot_model$super_dust, 
+                             c(0,15,35,75,999), include.lowest = T,
+                             labels = c('0','15','35','75'))
+colors_sdot <- c("#3982BA", "#66B74F", "#FAE284", "#E93A30")
+super_dust_color_sdot <- colorFactor(palette = colors_sdot , mean_sdot_model$super_dust_range)
+
+
+# 미세먼지 농도 지도에 표기
+leaflet(data_polys) %>%
+  setView(lng=126.9784, lat=37.566, zoom=11) %>%
+  addPolygons(fillColor = "white",weight ="2",color = "black", opacity = 0.8  ) %>% 
+  addProviderTiles('CartoDB.Positron') %>% 
+  addCircleMarkers(data = mean_sdot_model, lat = ~lat, lng = ~long,
+                   color = ~dust_color_sdot(dust_range), popup = sdot_model$dust,
+                   radius = ~sqrt(dust/3),  stroke = FALSE, fillOpacity = 0.2, ) %>%
+  addLegendCustom("bottomright",
+                  colors =c("#3982BA", "#66B74F", "#FAE284", "#E93A30"),
+                  labels= c("좋음 : 0 ~ 30㎍/㎥", "보통 : 31 ~ 80㎍/㎥","나쁨 : 81 ~ 150㎍/㎥","매우나쁨 : 151㎍/㎥ 이상"),
+                  sizes = c(10, 12, 13,15),
+                  opacity = 1,
+                  title= "미세먼지(PM10) 기준 등급")
+  
 ```
