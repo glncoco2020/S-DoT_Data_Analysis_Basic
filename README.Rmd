@@ -122,7 +122,6 @@ new_map <- fortify(map, region = 'SIG_CD')
 new_map$id <- as.numeric(new_map$id)
 seoul_map <- new_map[new_map$id <= 11740,]
 
-
 P_merge <- merge(seoul_map, p, by='id')
 P_merge <- P_merge %>% dplyr::rename(gover = 시군구명)
 
@@ -143,6 +142,7 @@ data_polys = SpatialPolygons(split_data_poly)
 
 
 #지도에 SDOT 설치 정보 뿌리기
+#테스트버전
 leaflet(data_polys) %>%
   setView(lng=126.9784, lat=37.566, zoom=11) %>%
   addPolygons(fillColor = "white",weight ="2",color = "black", opacity = 0.8   ) %>% 
