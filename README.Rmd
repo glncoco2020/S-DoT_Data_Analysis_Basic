@@ -10,6 +10,18 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 library(DT)
 library(dplyr)
+library(plotly)
+library(rmarkdown)
+library(ggmap)
+library(ggplot2)
+library(raster)
+library(rgeos)
+library(maptools)
+library(rgdal)
+library(readAny)
+library(leaflet)
+
+
 ```
 
 ## GitHub Documents
@@ -27,7 +39,7 @@ sdot<-read.csv("data/sdot_20200507.csv", fileEncoding = 'euc-kr', head=TRUE, che
 
 
 ```{r, layout="l-body-outset"}
-library(rmarkdown)
+
 #데이터 중 위에서부터 100개의 데이터만 확인
 paged_table(sdot) %>% head(100)
 ```
@@ -43,8 +55,9 @@ summary(sdot)
 
 ```{r }
 # 분석 편의상 컬럼 이름 변경 
-sdot <- sdot %>% dplyr::rename(superdust =`초미세먼지 보정 (㎍/㎥)`)
+sdot <- sdot %>% dplyr::rename(super_dust =`초미세먼지 보정 (㎍/㎥)`)
 sdot <- sdot %>% dplyr::rename(dust =`미세먼지 보정 (㎍/㎥)`)
+sdot <- sdot %>% dplyr::rename(model =시리얼)
 
 # Na또는 Nan등 결측값 확인 
 sum(is.na(sdot)) 
@@ -54,7 +67,7 @@ sum(is.na(sdot))
 
 ```{r }
 #미세먼지 값이 0이하 or 초미세먼지 값이 0 이하 값 제거
-sdot <-sdot %>% filter(!superdust <=0 , !dust <=0)
+sdot <-sdot %>% filter(!super_dust <=0 , !dust <=0)
 
 
 #명령어 summary(데이터프레임)로 미세먼지 보정, 초미세먼지 보정 값 재확인 
@@ -64,24 +77,83 @@ summary(sdot)
 
 ```{r, warning= FALSE }
 #시간에 따른 미세먼지 값 확인 
-library(plotly)
+#동적 그래프 생성규칙 
 
-plot_ly(sdot, x = ~hour, y = sdot$dust, name = 'trace 0', type = 'scatter', mode = 'markers',
+#plot_ly(데이터프레임, x = ~시간, y = ~값)
+plot_ly(sdot, x = ~hour, y = ~dust, name = 'trace 0', type = 'scatter', mode = 'markers',
         marker = list(opacity = 0.4, color = "blue"))
 
-plot_ly(sdot, x = ~hour, y = sdot$superdust, name = 'trace 0', type = 'scatter', mode = 'markers',
+plot_ly(sdot, x = ~hour, y = ~super_dust, name = 'trace 0', type = 'scatter', mode = 'markers',
         marker = list(opacity = 0.4, color = "red"))
 
 
 ```
 
 
+```{r, warning= FALSE }
+#센서 설치정보 불러오기 
+model <- read.csv("data/model.csv", head = TRUE, fileEncoding = 'euc-kr')
 
-## Including Plots
+#SDot 데이터와 설치 정보 결합하기 
+sdot_model <- merge(sdot, model, by ="model", all.x = TRUE)
 
-You can also embed plots, for example:
+#경도 위도 이름 변경 및 사용데이터 결합
+sdot_model <- sdot_model %>% dplyr::rename(long = y, lat = x)
+sdot_model <- sdot_model %>% group_by(gover, model, hour) %>% summarise(long = mean(long), lat = mean(lat), super_dust = mean(super_dust), dust = mean(dust))
 
-```{r pressure, echo=FALSE}
+```
+
+
+
+## 지도 데이터 불러오기 
+
+지도정보 불러오기 :  
+
+```{r pressure, echo=FALSE, warning= FALSE}
+
+p<- read.any("data/sample.csv", header = TRUE) #시각화할 데이터셋
+
+map =readOGR('data/TL_SCCO_SIG.shp',encoding = 'cp949')
+
+map <- spTransform(map, CRSobj = CRS('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs'))
+map@polygons[[1]]@Polygons[[1]]@coords %>% head(n = 10L)
+new_map <- fortify(map, region = 'SIG_CD')
+
+new_map$id <- as.numeric(new_map$id)
+seoul_map <- new_map[new_map$id <= 11740,]
+
+
+P_merge <- merge(seoul_map, p, by='id')
+P_merge <- P_merge %>% dplyr::rename(gover = 시군구명)
+
+top_stat_sdot<-sdot_model %>% group_by(gover, hour) %>% summarise(dust = mean(dust), super_dust = mean(super_dust))
+
+top_merge<-merge(P_merge, top_stat_sdot, by="gover", all.x =TRUE)
+
+
+################### 아주 중요 ##############################
+split_data_poly = lapply(unique(P_merge$group), function(x) {
+  df = as.matrix(P_merge[P_merge$group == x, c("long", "lat")])
+  polys = Polygons(list(Polygon(df)), ID = x)
+  return(polys)
+})
+
+#split_data_poly
+data_polys = SpatialPolygons(split_data_poly)
+
+leaflet(data_polys) %>%
+  setView(lng=126.9784, lat=37.566, zoom=11) %>%
+  addPolygons(fillColor = "white",weight ="2",color = "black", opacity = 0.8   ) %>% 
+  addProviderTiles('CartoDB.Positron') %>% 
+  addCircleMarkers(data = sdot_model, lng=~long, lat=~lat, color="#20639B", radius = "2",stroke = TRUE, fillOpacity = 0.8, weight =1)
+
+
+
+
+
+
+
+
 plot(pressure)
 ```
 
