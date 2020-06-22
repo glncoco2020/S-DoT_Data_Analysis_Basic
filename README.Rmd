@@ -1,5 +1,5 @@
 ---
-title: "index"
+title: "README"
 output: 
   html_document:
     keep_md: true
@@ -13,7 +13,7 @@ library(DT)
 ```
 
 ## GitHub Documents
-
+TEST
 This is an R Markdown format used for publishing markdown documents to GitHub. When you click the **Knit** button all R code chunks are run and a markdown file (.md) suitable for publishing to GitHub is generated.
 
 ## 데이터 불러오기
@@ -27,8 +27,8 @@ sdot<-read.csv("data/sdot_20200507.csv", fileEncoding = 'euc-kr', head=TRUE, che
 
 
 ```{r, layout="l-body-outset"}
-library(rmarkdown)
-paged_table(sdot) %>% head(100)
+# library(rmarkdown)
+# paged_table(sdot) %>% head(100)
 ```
 
 
