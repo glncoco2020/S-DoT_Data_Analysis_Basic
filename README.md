@@ -1,5 +1,5 @@
 ---
-title: "index"
+title: "README"
 output: 
   html_document:
     keep_md: true
