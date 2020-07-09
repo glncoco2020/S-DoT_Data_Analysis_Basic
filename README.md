@@ -147,13 +147,13 @@ sdot <- sdot %>% dplyr::rename(super_dust =`초미세먼지 보정 (㎍/㎥)`)
 sdot <- sdot %>% dplyr::rename(dust =`미세먼지 보정 (㎍/㎥)`)
 sdot <- sdot %>% dplyr::rename(model =시리얼)
 sdot <- sdot %>% dplyr::rename(temp =`기온 (℃)`)
-sdot <- sdot %>% dplyr::rename(습도 =`상대습도 (%)`)
+sdot <- sdot %>% dplyr::rename(humidity =`상대습도 (%)`)
 sdot <- sdot %>% dplyr::rename(lux =`조도 (lux)`)
 sdot <- sdot %>% dplyr::rename(db =`소음 (dB)`)
 
 
 #사용하고자 하는 컬럼 선택 
-sdot <- sdot %>% dplyr::select(model, date, hour, dust,super_dust,temp,습도, lux, db)
+sdot <- sdot %>% dplyr::select(model, date, hour, dust,super_dust,temp,humidity, lux, db)
 
 # 결측값 확인 
 plot_missing(sdot)
@@ -179,7 +179,7 @@ summary(sdot)
 ##  V02Q1940052:   24                    3rd Qu.:18.00   3rd Qu.: 53.4511  
 ##  V02Q1940054:   24                    Max.   :23.00   Max.   :345.6000  
 ##  (Other)    :19816                                                      
-##    super_dust             temp            습도            lux       
+##    super_dust             temp          humidity          lux       
 ##  Min.   :  0.03448   Min.   :15.24   Min.   :31.57   Min.   :    1  
 ##  1st Qu.: 23.48148   1st Qu.:19.46   1st Qu.:57.10   1st Qu.:    5  
 ##  Median : 27.87750   Median :21.21   Median :68.29   Median : 1286  
@@ -201,6 +201,131 @@ summary(sdot)
 #결측값 및 0이하 값 제거 확인
 ```
 
+describe() : 기술통계  
+
+* n : 결측치를 제외한 데이터 건수  
+* na : 결측치 건수  
+* mean : 산술평균  
+* sd : 표준편차  
+* se_mean : 표준오차. sd/sqrt(n)  
+* IQR : 사분위 범위(Interquartile range) (Q3-Q1)  
+* skewness : 왜도  
+* kurtosis : 첨도  
+* p25 : Q1. 25% 백분위수  
+* p50 : 중위수. 50% 백분위수  
+* p75 : Q3. 75% 백분위수  
+* p01, p05,p10,p20,p30` : 1%, 5%, 20%, 30% 백분위수  
+* p40, p60,p70,p80` : 40%, 60%, 70%, 80% 백분위수  
+* p90, p95,p99,p100` : 90%, 95%, 99%, 100% 백분위수  
+
+
+```r
+describe(sdot) 
+```
+
+```
+## Warning: The `x` argument of `as_tibble.matrix()` must have column names if `.name_repair` is omitted as of tibble 2.0.0.
+## Using compatibility `.name_repair`.
+## This warning is displayed once every 8 hours.
+## Call `lifecycle::last_warnings()` to see where this warning was generated.
+```
+
+```
+## Warning: `cols` is now required.
+## Please use `cols = c(statistic)`
+```
+
+```
+## # A tibble: 7 x 26
+##   variable     n    na   mean     sd se_mean    IQR skewness kurtosis     p00
+##   <chr>    <int> <int>  <dbl>  <dbl>   <dbl>  <dbl>    <dbl>    <dbl>   <dbl>
+## 1 hour     19960     0   11.5 6.93e0  0.0490 1.30e1  0.00177   -1.20   0     
+## 2 dust     19960     0   44.4 1.48e1  0.105  1.66e1  0.299     11.5    0.133 
+## 3 super_d… 19960     0   27.4 7.96e0  0.0564 8.60e0  0.203      9.33   0.0345
+## 4 temp     19960     0   22.0 3.06e0  0.0217 4.95e0  0.696     -0.622 15.2   
+## 5 humidity 19960     0   64.8 9.60e0  0.0680 1.50e1 -0.694     -0.657 31.6   
+## 6 lux      19960     0 6672.  1.04e4 73.4    9.08e3  1.92       3.08   1     
+## 7 db       19960     0   48.2 4.49e0  0.0318 5.49e0 -1.44      15.8    0     
+## # … with 16 more variables: p01 <dbl>, p05 <dbl>, p10 <dbl>, p20 <dbl>,
+## #   p25 <dbl>, p30 <dbl>, p40 <dbl>, p50 <dbl>, p60 <dbl>, p70 <dbl>,
+## #   p75 <dbl>, p80 <dbl>, p90 <dbl>, p95 <dbl>, p99 <dbl>, p100 <dbl>
+```
+
+
+diagnose_outlier()은 데이터 프레임의 수치형(연속형과 이산형) 변수의 이상치(outliers)를 진단  
+diagnose_outlier()이 반환하는 tbl_df 객체의 변수는 다음과 같음  
+* outliers_cnt : 이상치의 개수  
+* outliers_ratio : 이상치의 비율(백분율)  
+* outliers_mean : 이상치들의 산술평균  
+* with_mean : 이상치를 포함한 전체 관측치의 평균  
+* without_mean : 이상치를 제거한 관측치의 산술평균  
+
+```r
+dlookr::diagnose_outlier(sdot) %>% 
+   dplyr::mutate(outliers = outliers_mean / with_mean) %>% 
+   dplyr::arrange(desc(outliers))
+```
+
+```
+##    variables outliers_cnt outliers_ratio outliers_mean  with_mean without_mean
+## 1        lux         1938     9.70941884   33086.70739 6672.20456   3831.71479
+## 2       temp            5     0.02505010      32.74142   22.02408     22.02140
+## 3         db          375     1.87875752      40.93486   48.15212     48.29031
+## 4 super_dust          875     4.38376754      16.42613   27.40362     27.90691
+## 5       dust          583     2.92084168      23.97613   44.38475     44.99879
+## 6   humidity            2     0.01002004      33.05000   64.80527     64.80846
+## 7       hour            0     0.00000000           NaN   11.49193     11.49193
+##    outliers
+## 1 4.9588868
+## 2 1.4866189
+## 3 0.8501155
+## 4 0.5994146
+## 5 0.5401886
+## 6 0.5099894
+## 7       NaN
+```
+
+
+```r
+dlookr::plot_outlier(sdot, lux)
+```
+
+![](README_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+
+```r
+dlookr::plot_outlier(sdot, temp)
+```
+
+![](README_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+
+```r
+dlookr::plot_outlier(sdot, db)
+```
+
+![](README_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
+
+```r
+dlookr::plot_outlier(sdot, super_dust)
+```
+
+![](README_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
+
+```r
+dlookr::plot_outlier(sdot, dust)
+```
+
+![](README_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
+
+```r
+dlookr::plot_outlier(sdot, humidity)
+```
+
+![](README_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 ```r
 #시간에 따른 미세먼지 값 확인 
@@ -219,25 +344,26 @@ cor_heart <- cor(sdot[,3:8])
 corrplot(cor_heart, method = "ellipse", type="upper",)
 ```
 
-![](README_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 
 ```r
 ggcorrplot(cor_heart,lab = T)
 ```
 
-![](README_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+
 
 ```r
 ggcorr(cor_heart, label = T, label_round = 2)
 ```
 
-![](README_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
 
 
 ```r
 #센서 설치정보 불러오기 
- model <- read.csv("data/model.csv", head = TRUE, fileEncoding = 'euc-kr')
+model <- read.csv("data/model.csv", head = TRUE, fileEncoding = 'euc-kr')
 # 
 # model$y<- rnorm(n=851, mean=126.981, sd=0.08446877)
 # model$x<- rnorm(n=851, mean=37.54613, sd=0.05030271)
@@ -247,15 +373,17 @@ ggcorr(cor_heart, label = T, label_round = 2)
 sdot_model <- merge(sdot, model, by ="model", all.x = TRUE)
 
 #경도 위도 이름 변경 및 사용데이터 결합
-sdot_model <- sdot_model %>% dplyr::rename(long = y, lat = x)
-sdot_model <- sdot_model %>% group_by(gover, model, hour) %>% summarise(long = mean(long), lat = mean(lat), super_dust = mean(super_dust), dust = mean(dust), temp = mean(temp), 습도=mean(습도), lux = mean(lux), db= mean(db))
+sdot_model <- sdot_model %>% dplyr::rename(long = y, lat = x,gover = gover)
+
+sdot_model <- sdot_model %>% group_by(gover, model, hour) %>% summarise(long = mean(long), lat = mean(lat), super_dust = mean(super_dust), dust = mean(dust), temp = mean(temp), humidity=mean(humidity), lux = mean(lux), db= mean(db))
 ```
+
 
 ## 지도 데이터 불러오기 
 지도정보 불러오기 :  
 
 ```r
-#서울시/자치구/이름 파일 
+#서울시/gover/이름 파일 
 p<- read.any("data/sample.csv", header = TRUE) #시각화할 데이터셋
 
 #대한민국 시군구 행정구역 shp파일 
@@ -296,11 +424,11 @@ new_map$id <- as.numeric(new_map$id)
 #대한민국 시군구 행정구역 중 서울시만 불러오기 
 seoul_map <- new_map[new_map$id <= 11740,]
 
-#서울시 자치구 이름 표기 정보 결합
+#서울시 gover 이름 표기 정보 결합
 P_merge <- merge(seoul_map, p, by='id')
 P_merge <- P_merge %>% dplyr::rename(gover = 시군구명)
 
-top_stat_sdot<-sdot_model %>% group_by(gover, hour) %>% summarise(dust = mean(dust), super_dust = mean(super_dust), temp = mean(temp), 습도=mean(습도), lux = mean(lux), db= mean(db))
+top_stat_sdot<-sdot_model %>% group_by(gover, hour) %>% summarise(dust = mean(dust), super_dust = mean(super_dust), temp = mean(temp), humidity=mean(humidity), lux = mean(lux), db= mean(db))
 
 top_merge<-merge(P_merge, top_stat_sdot, by="gover", all.x =TRUE)
 
@@ -316,6 +444,30 @@ split_data_poly = lapply(unique(P_merge$group), function(x) {
 data_polys = SpatialPolygons(split_data_poly)
 ```
 
+
+
+
+```r
+plot_histogram(sdot)
+```
+
+![](README_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+
+
+```r
+plot_boxplot(sdot_model, by = "hour")
+```
+
+![](README_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+
+
+```r
+plot_boxplot(sdot_model, by = "gover")
+```
+
+![](README_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+
+
 ## 데이터
 
 ```r
@@ -324,7 +476,7 @@ ggplot(top_stat_sdot, aes(x = hour, y = dust, color = gover))+
     theme(text=element_text(family="NanumGothic"))
 ```
 
-![](README_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
 
 ```r
@@ -333,16 +485,16 @@ ggplot(top_stat_sdot, aes(x = hour, y = super_dust, color = gover))+
     theme(text=element_text(family="NanumGothic"))
 ```
 
-![](README_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
 
 ```r
-ggplot(top_stat_sdot, aes(x = hour, y = 습도, color = gover))+
+ggplot(top_stat_sdot, aes(x = hour, y = humidity, color = gover))+
   geom_smooth(se = FALSE) +
     theme(text=element_text(family="NanumGothic"))
 ```
 
-![](README_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 
 ```r
@@ -351,7 +503,7 @@ ggplot(top_stat_sdot, aes(x = hour, y = temp, color = gover))+
     theme(text=element_text(family="NanumGothic"))
 ```
 
-![](README_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 
 ```r
@@ -360,7 +512,7 @@ ggplot(top_stat_sdot, aes(x = hour, y = lux, color = gover))+
     theme(text=element_text(family="NanumGothic"))
 ```
 
-![](README_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
 
 
 
@@ -370,7 +522,7 @@ ggplot(top_stat_sdot, aes(x = hour, y = db, color = gover))+
     theme(text=element_text(family="NanumGothic"))
 ```
 
-![](README_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
 
 
@@ -378,7 +530,6 @@ ggplot(top_stat_sdot, aes(x = hour, y = db, color = gover))+
 test <- sdot_model[6:11]
 test2 <- sdot_model[1]
 sdot_model2 <- bind_cols(test2,test)
-
 
 
 sdot_model3<-sdot_model2[duplicated(sdot_model2$gover),]
@@ -398,9 +549,9 @@ pgdata2$lat_mean <-NULL
 pgdata2$long_mean <-NULL
 pgdata2$model_mean <-NULL
 
-worldcup2 <- pgdata2
+data2 <- pgdata2
 
-num_df <- worldcup2
+num_df <- data2
 
 result <- num_df[-1]
 row.names(result) <- num_df$gover
@@ -411,7 +562,7 @@ apply(num_df, 2, var)
 ```
 
 ```
-## super_dust_mean       dust_mean       temp_mean       습도_mean        lux_mean 
+## super_dust_mean       dust_mean       temp_mean   humidity_mean        lux_mean 
 ##    6.210927e+00    2.053979e+01    1.161621e-01    2.480176e+00    1.866847e+05 
 ##         db_mean 
 ##    1.008095e+00
@@ -419,8 +570,8 @@ apply(num_df, 2, var)
 
 ```r
 #주성분 분석
-worldcup_pca <- prcomp(num_df, scale = TRUE)
-summary(worldcup_pca)
+data2_pca <- prcomp(num_df, scale = TRUE)
+summary(data2_pca)
 ```
 
 ```
@@ -438,10 +589,10 @@ summary(worldcup_pca)
 
 
 ```r
-screeplot(worldcup_pca, main = "", col = "green", type = "lines", pch = 1, npcs = length(worldcup_pca$sdev))
+screeplot(data2_pca, main = "", col = "green", type = "lines", pch = 1, npcs = length(data2_pca$sdev))
 ```
 
-![](README_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
 
 ```r
 #요약과 그래프를 통해서 알 수 있듯이 PC1 + PC2 + PC3의 누적 기여율은 0.88 즉, 약 88%가 되며 성분 선택은 PC1,PC2,PC3까지만 하면 됨
@@ -450,7 +601,7 @@ screeplot(worldcup_pca, main = "", col = "green", type = "lines", pch = 1, npcs 
 
 ```r
 # 각각에 대한 제1주성분, 제2주성분 점수 구하기
-round(predict(worldcup_pca), 3)
+round(predict(data2_pca), 3)
 ```
 
 ```
@@ -483,18 +634,18 @@ round(predict(worldcup_pca), 3)
 ```
 
 ```r
-worldcup_pca$rotation <- -worldcup_pca$rotation
-worldcup_pca$x <- -worldcup_pca$x
-biplot(worldcup_pca)
+data2_pca$rotation <- -data2_pca$rotation
+data2_pca$x <- -data2_pca$x
+biplot(data2_pca)
 ```
 
-![](README_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
 
 ```r
-biplot(worldcup_pca, cex = 0.8, choices = c(1,3)) 
+biplot(data2_pca, cex = 0.8, choices = c(1,3)) 
 ```
 
-![](README_files/figure-html/unnamed-chunk-20-2.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-31-2.png)<!-- -->
 
 
 
