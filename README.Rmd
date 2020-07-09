@@ -49,10 +49,6 @@ library(GGally)
 
 ```
 
-## GitHub Documents
-
-This is an R Markdown format used for publishing markdown documents to GitHub. When you click the **Knit** button all R code chunks are run and a markdown file (.md) suitable for publishing to GitHub is generated.
-
 ## 데이터 불러오기
 
 S-Dot 1시간 측정 평균값이 저장된 csv파일 read
@@ -82,15 +78,15 @@ sdot <- sdot %>% dplyr::rename(super_dust =`초미세먼지 보정 (㎍/㎥)`)
 sdot <- sdot %>% dplyr::rename(dust =`미세먼지 보정 (㎍/㎥)`)
 sdot <- sdot %>% dplyr::rename(model =시리얼)
 sdot <- sdot %>% dplyr::rename(temp =`기온 (℃)`)
-sdot <- sdot %>% dplyr::rename(humidity =`상대습도 (%)`)
+sdot <- sdot %>% dplyr::rename(습도 =`상대습도 (%)`)
 sdot <- sdot %>% dplyr::rename(lux =`조도 (lux)`)
 sdot <- sdot %>% dplyr::rename(db =`소음 (dB)`)
 
 
 #사용하고자 하는 컬럼 선택 
-sdot <- sdot %>% dplyr::select(model, date, hour, dust,super_dust,temp,humidity, lux, db)
+sdot <- sdot %>% dplyr::select(model, date, hour, dust,super_dust,temp,습도, lux, db)
 
-# Na또는 Nan등 결측값 확인 
+# 결측값 확인 
 plot_missing(sdot)
 ```
 
@@ -133,12 +129,17 @@ ggcorr(cor_heart, label = T, label_round = 2)
 #센서 설치정보 불러오기 
 model <- read.csv("data/model.csv", head = TRUE, fileEncoding = 'euc-kr')
 
+model$y<- rnorm(n=851, mean=126.981, sd=0.08446877)
+model$x<- rnorm(n=851, mean=37.54613, sd=0.05030271)
+
+
+
 #SDot 데이터와 설치 정보 결합하기 
 sdot_model <- merge(sdot, model, by ="model", all.x = TRUE)
 
 #경도 위도 이름 변경 및 사용데이터 결합
 sdot_model <- sdot_model %>% dplyr::rename(long = y, lat = x)
-sdot_model <- sdot_model %>% group_by(gover, model, hour) %>% summarise(long = mean(long), lat = mean(lat), super_dust = mean(super_dust), dust = mean(dust), temp = mean(temp), humidity=mean(humidity), lux = mean(lux), db= mean(db))
+sdot_model <- sdot_model %>% group_by(gover, model, hour) %>% summarise(long = mean(long), lat = mean(lat), super_dust = mean(super_dust), dust = mean(dust), temp = mean(temp), 습도=mean(습도), lux = mean(lux), db= mean(db))
 
 ```
 
@@ -164,12 +165,12 @@ seoul_map <- new_map[new_map$id <= 11740,]
 P_merge <- merge(seoul_map, p, by='id')
 P_merge <- P_merge %>% dplyr::rename(gover = 시군구명)
 
-top_stat_sdot<-sdot_model %>% group_by(gover, hour) %>% summarise(dust = mean(dust), super_dust = mean(super_dust), temp = mean(temp), humidity=mean(humidity), lux = mean(lux), db= mean(db))
+top_stat_sdot<-sdot_model %>% group_by(gover, hour) %>% summarise(dust = mean(dust), super_dust = mean(super_dust), temp = mean(temp), 습도=mean(습도), lux = mean(lux), db= mean(db))
 
 top_merge<-merge(P_merge, top_stat_sdot, by="gover", all.x =TRUE)
 
 
-################### 아주 중요 ##############################
+################### 경계그룹 ##############################
 split_data_poly = lapply(unique(P_merge$group), function(x) {
   df = as.matrix(P_merge[P_merge$group == x, c("long", "lat")])
   polys = Polygons(list(Polygon(df)), ID = x)
@@ -183,7 +184,7 @@ data_polys = SpatialPolygons(split_data_poly)
 
 ```
 
-
+## 데이터
 ```{r, warning= FALSE }
 ggplot(top_stat_sdot, aes(x = hour, y = dust, color = gover))+
   geom_smooth(se = FALSE) +
@@ -197,7 +198,7 @@ ggplot(top_stat_sdot, aes(x = hour, y = super_dust, color = gover))+
 ```
 
 ```{r, warning= FALSE }
-ggplot(top_stat_sdot, aes(x = hour, y = humidity, color = gover))+
+ggplot(top_stat_sdot, aes(x = hour, y = 습도, color = gover))+
   geom_smooth(se = FALSE) +
     theme(text=element_text(family="NanumGothic"))
 ```
@@ -220,8 +221,6 @@ ggplot(top_stat_sdot, aes(x = hour, y = db, color = gover))+
   geom_smooth(se = FALSE) +
     theme(text=element_text(family="NanumGothic"))
 ```
-
-
 
 
 ```{r, warning= FALSE }
@@ -284,16 +283,15 @@ round(predict(worldcup_pca), 3)
 worldcup_pca$rotation <- -worldcup_pca$rotation
 worldcup_pca$x <- -worldcup_pca$x
 biplot(worldcup_pca)
+
+biplot(worldcup_pca, cex = 0.8, choices = c(1,3)) 
+# 해석은 각자
+
+
+
 ```
 
 ```{r, warning= FALSE }
-
-```
-
-```{r, warning= FALSE }
-
-```
-
 
 #지도에 SDOT 설치 정보 뿌리기
 #테스트버전
@@ -305,7 +303,6 @@ leaflet(data_polys) %>%
   addProviderTiles('CartoDB.Positron') %>% 
   #sdot_model에 담겨있는 위치정보를 맵에 보여주기 
   addCircleMarkers(data = sdot_model, lng=~long, lat=~lat, color="#20639B", radius = "2",stroke = TRUE, fillOpacity = 0.8, weight =1)
-
 
 ```
 
@@ -363,19 +360,19 @@ colors_sdot <- c("#3982BA", "#66B74F", "#FAE284", "#E93A30")
 super_dust_color_sdot <- colorFactor(palette = colors_sdot , mean_sdot_model$super_dust_range)
 
 
-# 미세먼지 농도 지도에 표기하기
-# leaflet(data_polys) %>%
-#   setView(lng=126.9784, lat=37.566, zoom=11) %>%
-#   addPolygons(fillColor = "white",weight ="2",color = "black", opacity = 0.8  ) %>% 
-#   addProviderTiles('CartoDB.Positron') %>% 
-#   addCircleMarkers(data = mean_sdot_model, lat = ~lat, lng = ~long,
-#                    color = ~dust_color_sdot(dust_range), popup = sdot_model$dust,
-#                    radius = ~sqrt(dust/3),  stroke = FALSE, fillOpacity = 0.2, ) %>%
-#   addLegendCustom("bottomright",
-#                   colors =c("#3982BA", "#66B74F", "#FAE284", "#E93A30"),
-#                   labels= c("좋음 : 0 ~ 30㎍/㎥", "보통 : 31 ~ 80㎍/㎥","나쁨 : 81 ~ 150㎍/㎥","매우나쁨 : 151㎍/㎥ 이상"),
-#                   sizes = c(10, 12, 13,15),
-#                   opacity = 1,
-#                   title= "미세먼지(PM10) 기준 등급")
+#미세먼지 농도 지도에 표기하기
+leaflet(data_polys) %>%
+  setView(lng=126.9784, lat=37.566, zoom=11) %>%
+  addPolygons(fillColor = "white",weight ="2",color = "black", opacity = 0.8  ) %>%
+  addProviderTiles('CartoDB.Positron') %>%
+  addCircleMarkers(data = mean_sdot_model, lat = ~lat, lng = ~long,
+                   color = ~dust_color_sdot(dust_range), popup = sdot_model$dust,
+                   radius = ~sqrt(dust/3),  stroke = FALSE, fillOpacity = 0.1, ) #%>%
+  # addLegendCustom("bottomright",
+  #                colors =c("#3982BA", "#66B74F", "#FAE284", "#E93A30"),
+  #                labels= c("좋음 : 0 ~ 30㎍/㎥", "보통 : 31 ~ 80㎍/㎥","나쁨 : 81 ~ 150㎍/㎥","매우나쁨 : 151㎍/㎥ 이상"),
+  #                sizes = c(10, 12, 13,15),
+  #                opacity = 1,
+  #                title= "미세먼지(PM10) 기준 등급")
   
 ```
