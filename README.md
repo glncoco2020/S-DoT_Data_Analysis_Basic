@@ -260,10 +260,11 @@ diagnose_outlier()이 반환하는 tbl_df 객체의 변수는 다음과 같음
 * with_mean : 이상치를 포함한 전체 관측치의 평균  
 * without_mean : 이상치를 제거한 관측치의 산술평균  
 
+
 ```r
 dlookr::diagnose_outlier(sdot) %>% 
-   dplyr::mutate(outliers = outliers_mean / with_mean) %>% 
-   dplyr::arrange(desc(outliers))
+   mutate(outliers = outliers_mean / with_mean) %>% 
+   arrange(desc(outliers))
 ```
 
 ```
@@ -340,7 +341,7 @@ dlookr::plot_outlier(sdot, humidity)
 
 cor_heart <- cor(sdot[,3:8])
 
-
+#상관관계 표현 그래프 1
 corrplot(cor_heart, method = "ellipse", type="upper",)
 ```
 
@@ -348,6 +349,7 @@ corrplot(cor_heart, method = "ellipse", type="upper",)
 
 
 ```r
+#상관관계 표현 그래프 2
 ggcorrplot(cor_heart,lab = T)
 ```
 
@@ -355,6 +357,7 @@ ggcorrplot(cor_heart,lab = T)
 
 
 ```r
+#상관관계 표현 그래프 3
 ggcorr(cor_heart, label = T, label_round = 2)
 ```
 
@@ -651,62 +654,70 @@ biplot(data2_pca, cex = 0.8, choices = c(1,3))
 
 ```r
 #지도에 SDOT 설치 정보 뿌리기
-# library(mapview)
-# m <-leaflet(data_polys) %>%
-#   setView(lng=126.9784, lat=37.566, zoom=11) %>%
-#   addPolygons(fillColor = "white",weight ="2",color = "black", opacity = 0.8   ) %>% 
-#   addProviderTiles('CartoDB.Positron') %>% 
-#   addCircleMarkers(data = sdot_model, lng=~long, lat=~lat, color="#20639B", radius = "2",stroke = TRUE, fillOpacity = 0.8, weight =1)
-# 
-# mapshot(m, file = "map1.png")
+library(mapview)
+m <-leaflet(data_polys) %>%
+  setView(lng=126.9784, lat=37.566, zoom=11) %>%
+  addPolygons(fillColor = "white",weight ="2",color = "black", opacity = 0.8   ) %>%
+  addProviderTiles('CartoDB.Positron') %>%
+  addCircleMarkers(data = sdot_model, lng=~long, lat=~lat, color="#20639B", radius = "2",stroke = TRUE, fillOpacity = 0.8, weight =1)
+
+saveWidget(m, "temp.html", selfcontained = FALSE)
+webshot("temp.html", file = "Rplo1.png")
 ```
+
+![](README_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
 
 
 ```r
 # 미세먼지 값 표시하기
-# 미세먼지 범례설정 
+# 미세먼지 범례설정
 
-# sdot_model$dust_range <- cut(sdot_model$dust, 
-#                              c(0,30,80,150,999), include.lowest = T,
-#                              labels = c('0','15','35','75'))
-# colors_sdot <- c("#3982BA", "#66B74F", "#FAE284", "#E93A30")
-# dust_color_sdot <- colorFactor(palette = colors_sdot , sdot_model$dust_range)
-# 
-# 
-# # 초미세먼지 범례설정
-# sdot_model$super_dust_range <- cut(sdot_model$super_dust, 
-#                              c(0,15,35,75,999), include.lowest = T,
-#                              labels = c('0','15','35','75'))
-# colors_sdot <- c("#3982BA", "#66B74F", "#FAE284", "#E93A30")
-# super_dust_color_sdot <- colorFactor(palette = colors_sdot , sdot_model$super_dust_range)
-# 
-# 
-# 
-# # 일별 
-# mean_sdot_model <- sdot_model %>% group_by(model) %>% summarise(super_dust =mean(super_dust), dust = mean(dust), long = mean(long), lat = mean(lat))
-# 
-# # 일별 미세먼지 범례설정 
-# mean_sdot_model$dust_range <- cut(mean_sdot_model$dust, 
-#                              c(0,30,80,150,999), include.lowest = T,
-#                              labels = c('0','15','35','75'))
-# colors_sdot <- c("#3982BA", "#66B74F", "#FAE284", "#E93A30")
-# dust_color_sdot <- colorFactor(palette = colors_sdot , mean_sdot_model$dust_range)
-# 
-# 
-# # 일별 초미세먼지 범례설정
-# mean_sdot_model$super_dust_range <- cut(mean_sdot_model$super_dust, 
-#                              c(0,15,35,75,999), include.lowest = T,
-#                              labels = c('0','15','35','75'))
-# colors_sdot <- c("#3982BA", "#66B74F", "#FAE284", "#E93A30")
-# super_dust_color_sdot <- colorFactor(palette = colors_sdot , mean_sdot_model$super_dust_range)
-# 
-# 
-# #미세먼지 농도 지도에 표기하기
-# leaflet(data_polys) %>%
-#   setView(lng=126.9784, lat=37.566, zoom=11) %>%
-#   addPolygons(fillColor = "white",weight ="2",color = "black", opacity = 0.8  ) %>%
-#   addProviderTiles('CartoDB.Positron') %>%
-#   addCircleMarkers(data = mean_sdot_model, lat = ~lat, lng = ~long,
-#                    color = ~dust_color_sdot(dust_range), popup = sdot_model$dust,
-#                    radius = ~sqrt(dust/3),  stroke = FALSE, fillOpacity = 0.1, )
+sdot_model$dust_range <- cut(sdot_model$dust,
+                             c(0,30,80,150,999), include.lowest = T,
+                             labels = c('0','15','35','75'))
+colors_sdot <- c("#3982BA", "#66B74F", "#FAE284", "#E93A30")
+dust_color_sdot <- colorFactor(palette = colors_sdot , sdot_model$dust_range)
+
+
+# 초미세먼지 범례설정
+sdot_model$super_dust_range <- cut(sdot_model$super_dust,
+                             c(0,15,35,75,999), include.lowest = T,
+                             labels = c('0','15','35','75'))
+colors_sdot <- c("#3982BA", "#66B74F", "#FAE284", "#E93A30")
+super_dust_color_sdot <- colorFactor(palette = colors_sdot , sdot_model$super_dust_range)
+
+
+
+# 일별
+mean_sdot_model <- sdot_model %>% group_by(model) %>% summarise(super_dust =mean(super_dust), dust = mean(dust), long = mean(long), lat = mean(lat))
+
+# 일별 미세먼지 범례설정
+mean_sdot_model$dust_range <- cut(mean_sdot_model$dust,
+                             c(0,30,80,150,999), include.lowest = T,
+                             labels = c('0','15','35','75'))
+colors_sdot <- c("#3982BA", "#66B74F", "#FAE284", "#E93A30")
+dust_color_sdot <- colorFactor(palette = colors_sdot , mean_sdot_model$dust_range)
+
+
+# 일별 초미세먼지 범례설정
+mean_sdot_model$super_dust_range <- cut(mean_sdot_model$super_dust,
+                             c(0,15,35,75,999), include.lowest = T,
+                             labels = c('0','15','35','75'))
+colors_sdot <- c("#3982BA", "#66B74F", "#FAE284", "#E93A30")
+super_dust_color_sdot <- colorFactor(palette = colors_sdot , mean_sdot_model$super_dust_range)
+
+
+#미세먼지 농도 지도에 표기하기
+m<-leaflet(data_polys) %>%
+  setView(lng=126.9784, lat=37.566, zoom=11) %>%
+  addPolygons(fillColor = "white",weight ="2",color = "black", opacity = 0.8  ) %>%
+  addProviderTiles('CartoDB.Positron') %>%
+  addCircleMarkers(data = mean_sdot_model, lat = ~lat, lng = ~long,
+                   color = ~dust_color_sdot(dust_range), popup = sdot_model$dust,
+                   radius = ~sqrt(dust/3),  stroke = FALSE, fillOpacity = 0.1, )
+
+saveWidget(m, "temp.html", selfcontained = FALSE)
+webshot("temp.html", file = "Rplo2.png")
 ```
+
+![](README_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
