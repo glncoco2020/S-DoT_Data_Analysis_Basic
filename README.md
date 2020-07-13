@@ -458,14 +458,14 @@ plot_histogram(sdot)
 
 
 ```r
-plot_boxplot(sdot_model, by = "hour")
+plot_boxplot(sdot_model, by = "hour", theme_config = list(text=element_text(family="NanumGothic")))
 ```
 
 ![](README_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 
 ```r
-plot_boxplot(sdot_model, by = "gover")
+plot_boxplot(sdot_model, by = "gover", theme_config = list(text=element_text(family="NanumGothic")))
 ```
 
 ![](README_files/figure-html/unnamed-chunk-21-1.png)<!-- -->

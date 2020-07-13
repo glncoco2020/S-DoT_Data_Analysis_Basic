@@ -260,11 +260,11 @@ plot_histogram(sdot)
 ```
 
 ```{r, warning= FALSE, message=F }
-plot_boxplot(sdot_model, by = "hour")
+plot_boxplot(sdot_model, by = "hour", theme_config = list(text=element_text(family="NanumGothic")))
 ```
 
-```{r, warning= FALSE, message=F }
-plot_boxplot(sdot_model, by = "gover")
+```{r, warning= FALSE, message=F, fig.width = 10, fig.height=  15}
+plot_boxplot(sdot_model, by = "gover", theme_config = list(text=element_text(family="NanumGothic")))
 ```
 
 
