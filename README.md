@@ -150,10 +150,11 @@ sdot <- sdot %>% dplyr::rename(temp =`기온 (℃)`)
 sdot <- sdot %>% dplyr::rename(humidity =`상대습도 (%)`)
 sdot <- sdot %>% dplyr::rename(lux =`조도 (lux)`)
 sdot <- sdot %>% dplyr::rename(db =`소음 (dB)`)
+sdot <- sdot %>% dplyr::rename(uvi = `자외선 (UVI)`)
 
 
 #사용하고자 하는 컬럼 선택 
-sdot <- sdot %>% dplyr::select(model, date, hour, dust,super_dust,temp,humidity, lux, db)
+sdot <- sdot %>% dplyr::select(model, date, hour, dust,super_dust,temp,humidity, lux, db, uvi)
 
 # 결측값 확인 
 plot_missing(sdot)
@@ -187,13 +188,13 @@ summary(sdot)
 ##  3rd Qu.: 32.07692   3rd Qu.:24.41   3rd Qu.:72.13   3rd Qu.: 9088  
 ##  Max.   :179.96667   Max.   :34.23   Max.   :85.62   Max.   :50200  
 ##                                                                     
-##        db       
-##  Min.   : 0.00  
-##  1st Qu.:45.39  
-##  Median :48.04  
-##  Mean   :48.15  
-##  3rd Qu.:50.88  
-##  Max.   :64.52  
+##        db             uvi         
+##  Min.   : 0.00   Min.   :  1.000  
+##  1st Qu.:45.39   1st Qu.:  2.000  
+##  Median :48.04   Median :  2.120  
+##  Mean   :48.15   Mean   :  9.097  
+##  3rd Qu.:50.88   3rd Qu.: 10.828  
+##  Max.   :64.52   Max.   :108.767  
 ## 
 ```
 
@@ -236,16 +237,17 @@ describe(sdot)
 ```
 
 ```
-## # A tibble: 7 x 26
+## # A tibble: 8 x 26
 ##   variable     n    na   mean     sd se_mean    IQR skewness kurtosis     p00
 ##   <chr>    <int> <int>  <dbl>  <dbl>   <dbl>  <dbl>    <dbl>    <dbl>   <dbl>
-## 1 hour     19960     0   11.5 6.93e0  0.0490 1.30e1  0.00177   -1.20   0     
-## 2 dust     19960     0   44.4 1.48e1  0.105  1.66e1  0.299     11.5    0.133 
-## 3 super_d… 19960     0   27.4 7.96e0  0.0564 8.60e0  0.203      9.33   0.0345
-## 4 temp     19960     0   22.0 3.06e0  0.0217 4.95e0  0.696     -0.622 15.2   
-## 5 humidity 19960     0   64.8 9.60e0  0.0680 1.50e1 -0.694     -0.657 31.6   
-## 6 lux      19960     0 6672.  1.04e4 73.4    9.08e3  1.92       3.08   1     
-## 7 db       19960     0   48.2 4.49e0  0.0318 5.49e0 -1.44      15.8    0     
+## 1 hour     19960     0 1.15e1 6.93e0  0.0490 1.30e1  0.00177   -1.20   0     
+## 2 dust     19960     0 4.44e1 1.48e1  0.105  1.66e1  0.299     11.5    0.133 
+## 3 super_d… 19960     0 2.74e1 7.96e0  0.0564 8.60e0  0.203      9.33   0.0345
+## 4 temp     19960     0 2.20e1 3.06e0  0.0217 4.95e0  0.696     -0.622 15.2   
+## 5 humidity 19960     0 6.48e1 9.60e0  0.0680 1.50e1 -0.694     -0.657 31.6   
+## 6 lux      19960     0 6.67e3 1.04e4 73.4    9.08e3  1.92       3.08   1     
+## 7 db       19960     0 4.82e1 4.49e0  0.0318 5.49e0 -1.44      15.8    0     
+## 8 uvi      19960     0 9.10e0 1.27e1  0.0900 8.83e0  2.42       6.68   1     
 ## # … with 16 more variables: p01 <dbl>, p05 <dbl>, p10 <dbl>, p20 <dbl>,
 ## #   p25 <dbl>, p30 <dbl>, p40 <dbl>, p50 <dbl>, p60 <dbl>, p70 <dbl>,
 ## #   p75 <dbl>, p80 <dbl>, p90 <dbl>, p95 <dbl>, p99 <dbl>, p100 <dbl>
@@ -269,21 +271,23 @@ dlookr::diagnose_outlier(sdot) %>%
 
 ```
 ##    variables outliers_cnt outliers_ratio outliers_mean  with_mean without_mean
-## 1        lux         1938     9.70941884   33086.70739 6672.20456   3831.71479
-## 2       temp            5     0.02505010      32.74142   22.02408     22.02140
-## 3         db          375     1.87875752      40.93486   48.15212     48.29031
-## 4 super_dust          875     4.38376754      16.42613   27.40362     27.90691
-## 5       dust          583     2.92084168      23.97613   44.38475     44.99879
-## 6   humidity            2     0.01002004      33.05000   64.80527     64.80846
-## 7       hour            0     0.00000000           NaN   11.49193     11.49193
+## 1        lux         1938     9.70941884   33086.70739 6672.20456  3831.714793
+## 2        uvi         2373    11.88877756      38.59983    9.09685     5.116036
+## 3       temp            5     0.02505010      32.74142   22.02408    22.021396
+## 4         db          375     1.87875752      40.93486   48.15212    48.290310
+## 5 super_dust          875     4.38376754      16.42613   27.40362    27.906909
+## 6       dust          583     2.92084168      23.97613   44.38475    44.998788
+## 7   humidity            2     0.01002004      33.05000   64.80527    64.808456
+## 8       hour            0     0.00000000           NaN   11.49193    11.491934
 ##    outliers
 ## 1 4.9588868
-## 2 1.4866189
-## 3 0.8501155
-## 4 0.5994146
-## 5 0.5401886
-## 6 0.5099894
-## 7       NaN
+## 2 4.2432087
+## 3 1.4866189
+## 4 0.8501155
+## 5 0.5994146
+## 6 0.5401886
+## 7 0.5099894
+## 8       NaN
 ```
 
 
@@ -328,6 +332,13 @@ dlookr::plot_outlier(sdot, humidity)
 
 ![](README_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
+
+```r
+dlookr::plot_outlier(sdot, uvi)
+```
+
+![](README_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+
 ```r
 #시간에 따른 미세먼지 값 확인 
 #동적 그래프 생성규칙 
@@ -339,13 +350,13 @@ dlookr::plot_outlier(sdot, humidity)
 # plot_ly(sdot, x = ~hour, y = ~super_dust, name = 'trace 0', type = 'scatter', mode = 'markers',
 #         marker = list(opacity = 0.4, color = "red"))
 
-cor_heart <- cor(sdot[,3:8])
-
+cor_heart <- cor(sdot[,4:10])
+#sdot[,4:10]
 #상관관계 표현 그래프 1
 corrplot(cor_heart, method = "ellipse", type="upper",)
 ```
 
-![](README_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 
 ```r
@@ -353,7 +364,7 @@ corrplot(cor_heart, method = "ellipse", type="upper",)
 ggcorrplot(cor_heart,lab = T)
 ```
 
-![](README_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
 
 
 ```r
@@ -361,7 +372,7 @@ ggcorrplot(cor_heart,lab = T)
 ggcorr(cor_heart, label = T, label_round = 2)
 ```
 
-![](README_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 
 ```r
@@ -378,7 +389,7 @@ sdot_model <- merge(sdot, model, by ="model", all.x = TRUE)
 #경도 위도 이름 변경 및 사용데이터 결합
 sdot_model <- sdot_model %>% dplyr::rename(long = y, lat = x,gover = gover)
 
-sdot_model <- sdot_model %>% group_by(gover, model, hour) %>% summarise(long = mean(long), lat = mean(lat), super_dust = mean(super_dust), dust = mean(dust), temp = mean(temp), humidity=mean(humidity), lux = mean(lux), db= mean(db))
+sdot_model <- sdot_model %>% group_by(gover, model, hour) %>% summarise(long = mean(long), lat = mean(lat), super_dust = mean(super_dust), dust = mean(dust), temp = mean(temp), humidity=mean(humidity), lux = mean(lux), db= mean(db), uvi = mean(uvi))
 ```
 
 
@@ -431,7 +442,7 @@ seoul_map <- new_map[new_map$id <= 11740,]
 P_merge <- merge(seoul_map, p, by='id')
 P_merge <- P_merge %>% dplyr::rename(gover = 시군구명)
 
-top_stat_sdot<-sdot_model %>% group_by(gover, hour) %>% summarise(dust = mean(dust), super_dust = mean(super_dust), temp = mean(temp), humidity=mean(humidity), lux = mean(lux), db= mean(db))
+top_stat_sdot<-sdot_model %>% group_by(gover, hour) %>% summarise(dust = mean(dust), super_dust = mean(super_dust), temp = mean(temp), humidity=mean(humidity), lux = mean(lux), db= mean(db), uvi = mean(uvi))
 
 top_merge<-merge(P_merge, top_stat_sdot, by="gover", all.x =TRUE)
 
@@ -451,24 +462,33 @@ data_polys = SpatialPolygons(split_data_poly)
 
 
 ```r
+# 히스토그램 그리기 
 plot_histogram(sdot)
-```
-
-![](README_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
-
-
-```r
-plot_boxplot(sdot_model, by = "hour", theme_config = list(text=element_text(family="NanumGothic")))
 ```
 
 ![](README_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 
+
+박스플롯 이해하기 
+
+![](data/read_boxplot.png)<!-- -->
+
+
 ```r
-plot_boxplot(sdot_model, by = "gover", theme_config = list(text=element_text(family="NanumGothic")))
+#시간별 박스플롯 그리기 
+plot_boxplot(sdot_model %>% dplyr::select(lux,dust,hour,dust,super_dust,humidity,temp,db,uvi), by = "hour", theme_config = list(text=element_text(family="NanumGothic")))
 ```
 
 ![](README_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+
+
+```r
+#자치구별 박스플롯 그리기 
+plot_boxplot(sdot_model %>% dplyr::select(lux,dust,super_dust,humidity,temp,db,uvi), by = "gover", theme_config = list(text=element_text(family="NanumGothic")))
+```
+
+![](README_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
 
 ## 데이터
@@ -479,7 +499,7 @@ ggplot(top_stat_sdot, aes(x = hour, y = dust, color = gover))+
     theme(text=element_text(family="NanumGothic"))
 ```
 
-![](README_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
 
 ```r
@@ -488,7 +508,7 @@ ggplot(top_stat_sdot, aes(x = hour, y = super_dust, color = gover))+
     theme(text=element_text(family="NanumGothic"))
 ```
 
-![](README_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 
 ```r
@@ -497,7 +517,7 @@ ggplot(top_stat_sdot, aes(x = hour, y = humidity, color = gover))+
     theme(text=element_text(family="NanumGothic"))
 ```
 
-![](README_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 
 ```r
@@ -506,7 +526,7 @@ ggplot(top_stat_sdot, aes(x = hour, y = temp, color = gover))+
     theme(text=element_text(family="NanumGothic"))
 ```
 
-![](README_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
 
 
 ```r
@@ -515,7 +535,7 @@ ggplot(top_stat_sdot, aes(x = hour, y = lux, color = gover))+
     theme(text=element_text(family="NanumGothic"))
 ```
 
-![](README_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
 
 
@@ -525,7 +545,7 @@ ggplot(top_stat_sdot, aes(x = hour, y = db, color = gover))+
     theme(text=element_text(family="NanumGothic"))
 ```
 
-![](README_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
 
 
 
@@ -567,8 +587,8 @@ apply(num_df, 2, var)
 ```
 ## super_dust_mean       dust_mean       temp_mean   humidity_mean        lux_mean 
 ##    6.210927e+00    2.053979e+01    1.161621e-01    2.480176e+00    1.866847e+05 
-##         db_mean 
-##    1.008095e+00
+##         db_mean        uvi_mean 
+##    1.008095e+00    5.924640e-01
 ```
 
 ```r
@@ -579,10 +599,10 @@ summary(data2_pca)
 
 ```
 ## Importance of components:
-##                           PC1    PC2    PC3    PC4     PC5     PC6
-## Standard deviation     1.4666 1.3602 1.1301 0.8103 0.20729 0.14860
-## Proportion of Variance 0.3585 0.3084 0.2129 0.1094 0.00716 0.00368
-## Cumulative Proportion  0.3585 0.6669 0.8797 0.9892 0.99632 1.00000
+##                           PC1    PC2    PC3    PC4     PC5     PC6     PC7
+## Standard deviation     1.4674 1.4117 1.2666 0.9124 0.59478 0.20582 0.14607
+## Proportion of Variance 0.3076 0.2847 0.2292 0.1189 0.05054 0.00605 0.00305
+## Cumulative Proportion  0.3076 0.5923 0.8215 0.9404 0.99090 0.99695 1.00000
 ```
 
 ```r
@@ -595,7 +615,7 @@ summary(data2_pca)
 screeplot(data2_pca, main = "", col = "green", type = "lines", pch = 1, npcs = length(data2_pca$sdev))
 ```
 
-![](README_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
 
 ```r
 #요약과 그래프를 통해서 알 수 있듯이 PC1 + PC2 + PC3의 누적 기여율은 0.88 즉, 약 88%가 되며 성분 선택은 PC1,PC2,PC3까지만 하면 됨
@@ -608,32 +628,32 @@ round(predict(data2_pca), 3)
 ```
 
 ```
-##             PC1    PC2    PC3    PC4    PC5    PC6
-## 강남구   -2.620  0.609 -1.607 -0.052  0.036 -0.006
-## 강동구   -2.308 -0.425  1.256  0.227  0.045 -0.042
-## 강북구    1.556 -1.492  0.023  0.278 -0.056 -0.161
-## 강서구    1.249  2.310 -0.270  0.842  0.365 -0.114
-## 관악구    0.316  1.300  0.430 -1.144 -0.060 -0.052
-## 광진구   -2.039 -0.386  0.328  0.677 -0.232 -0.007
-## 구로구   -0.153  2.852 -1.922  0.754 -0.109  0.053
-## 금천구   -0.352  2.074  2.784 -0.487  0.084 -0.081
-## 노원구    1.418 -1.997 -0.271 -0.791  0.156  0.003
-## 도봉구    0.199 -1.335 -0.329 -0.522 -0.264 -0.356
-## 동대문구 -1.576 -0.116 -2.212 -0.745  0.046 -0.145
-## 동작구   -0.015  0.975  1.228 -0.522 -0.147  0.091
-## 마포구    0.300  0.520  0.747  0.123 -0.093 -0.051
-## 서대문구  2.236 -0.594 -0.995  1.995 -0.312  0.169
-## 서초구   -1.816  0.809 -0.603  0.087  0.062  0.232
-## 성동구   -0.974 -1.024 -1.302 -1.007  0.224  0.080
-## 성북구    1.078 -0.845  0.510  1.091  0.589 -0.105
-## 송파구   -1.647 -1.430  0.354 -0.052  0.031  0.140
-## 양천구    1.605  1.649 -0.354 -0.226  0.133 -0.029
-## 영등포구  1.499  1.124  0.244 -0.603 -0.152  0.132
-## 용산구    1.294 -0.965  0.753 -0.668  0.000  0.389
-## 은평구    2.383 -0.832 -1.165 -0.994 -0.107 -0.037
-## 종로구   -0.858 -1.229  0.586  1.595 -0.076 -0.058
-## 중구     -0.183  0.192  1.048  0.005 -0.323 -0.132
-## 중랑구   -0.592 -1.743  0.741  0.138  0.162  0.088
+##             PC1    PC2    PC3    PC4    PC5    PC6    PC7
+## 강남구   -2.656  0.103 -1.552  0.581  0.359 -0.026 -0.015
+## 강동구   -2.181  0.853  1.833  0.202  0.365 -0.019 -0.071
+## 강북구    1.498 -1.136  1.016  0.581  0.312  0.070 -0.184
+## 강서구    1.432  2.143 -0.954  0.797 -0.246 -0.366 -0.106
+## 관악구    0.384  1.021 -0.600 -1.286  0.321  0.059 -0.054
+## 광진구   -2.062 -0.169  0.377  0.202 -0.800  0.204  0.016
+## 구로구   -0.082  1.641 -2.983  0.944 -0.502  0.092  0.070
+## 금천구   -0.107  2.698  0.985 -1.895 -0.789 -0.119 -0.042
+## 노원구    1.095 -3.113 -0.531 -1.382 -0.904 -0.218  0.077
+## 도봉구   -0.032 -2.136 -0.524 -0.921 -0.691  0.207 -0.313
+## 동대문구 -1.717 -1.011 -1.906  0.290  0.867 -0.030 -0.166
+## 동작구    0.163  1.662  0.846 -0.604  0.551  0.176  0.057
+## 마포구    0.327  0.428  0.040 -0.578 -0.770  0.059 -0.019
+## 서대문구  2.181 -0.795 -0.157  2.047 -0.851  0.303  0.174
+## 서초구   -1.792  0.595 -0.859  0.221 -0.012 -0.056  0.236
+## 성동구   -1.161 -1.701 -0.979 -0.389  0.622 -0.214  0.080
+## 성북구    1.124 -0.101  1.395  1.090 -0.111 -0.579 -0.102
+## 송파구   -1.773 -1.336  0.613 -0.423 -0.494 -0.052  0.170
+## 양천구    1.695  1.198 -1.078 -0.106  0.202 -0.128 -0.032
+## 영등포구  1.584  0.972 -0.373 -0.568  0.374  0.168  0.114
+## 용산구    1.295 -0.466  1.213 -0.474  0.721  0.040  0.358
+## 은평구    2.253 -1.443 -0.688 -0.145  1.039  0.135 -0.073
+## 종로구   -0.804 -0.090  1.859  1.570 -0.290  0.087 -0.076
+## 중구     -0.058  0.975  1.155 -0.072  0.295  0.339 -0.165
+## 중랑구   -0.607 -0.793  1.853  0.318  0.434 -0.133  0.065
 ```
 
 ```r
@@ -642,35 +662,57 @@ data2_pca$x <- -data2_pca$x
 biplot(data2_pca)
 ```
 
-![](README_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
 
 ```r
 biplot(data2_pca, cex = 0.8, choices = c(1,3)) 
 ```
 
-![](README_files/figure-html/unnamed-chunk-31-2.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-32-2.png)<!-- -->
 
-
+SDOT 850개 설치 주소(가상의 좌표)
 
 ```r
 #지도에 SDOT 설치 정보 뿌리기
 library(mapview)
 m <-leaflet(data_polys) %>%
+  # 지도 설정
   setView(lng=126.9784, lat=37.566, zoom=11) %>%
+  # 자치구 구역 지정 
   addPolygons(fillColor = "white",weight ="2",color = "black", opacity = 0.8   ) %>%
+  # 사용할 맵 스타일 
   addProviderTiles('CartoDB.Positron') %>%
+  # 좌표기준 데이터 그리기
   addCircleMarkers(data = sdot_model, lng=~long, lat=~lat, color="#20639B", radius = "2",stroke = TRUE, fillOpacity = 0.8, weight =1)
 
 saveWidget(m, "temp.html", selfcontained = FALSE)
 webshot("temp.html", file = "Rplo1.png")
 ```
 
-![](README_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
 
+
+S-DoT 850개 별 미세먼지 농도 
 
 ```r
-# 미세먼지 값 표시하기
-# 미세먼지 범례설정
+# #미세먼지 농도 지도에 표기하기 -> 색상표기 1색 
+# m  <-leaflet(data_polys) %>%
+#   setView(lng=126.9784, lat=37.566, zoom=11) %>%
+#   addPolygons(fillColor = "white",weight ="2",color = "black", opacity = 0.8  ) %>%
+#   addProviderTiles('CartoDB.Positron') %>%
+#   addCircleMarkers(data = mean_sdot_model, lat = ~lat, lng = ~long,
+#                    color = ~"red", popup = sdot_model$dust,
+#                    radius = ~sqrt(dust/3),  stroke = FALSE, fillOpacity = 0.1, )
+# 
+# saveWidget(m, "temp.html", selfcontained = FALSE)
+# webshot("temp.html", file = "Rplo2.png")
+```
+
+
+S-DoT 850개 별 미세먼지 농도(범례 설정)
+
+```r
+#미세먼지 농도 지도에 표기하기 - > 범례 설정 
 
 sdot_model$dust_range <- cut(sdot_model$dust,
                              c(0,30,80,150,999), include.lowest = T,
@@ -717,7 +759,11 @@ m<-leaflet(data_polys) %>%
                    radius = ~sqrt(dust/3),  stroke = FALSE, fillOpacity = 0.1, )
 
 saveWidget(m, "temp.html", selfcontained = FALSE)
-webshot("temp.html", file = "Rplo2.png")
+webshot("temp.html", file = "Rplo3.png")
 ```
 
-![](README_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-35-1.png)<!-- -->
+
+
+
+

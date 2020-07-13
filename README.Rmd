@@ -84,10 +84,11 @@ sdot <- sdot %>% dplyr::rename(temp =`기온 (℃)`)
 sdot <- sdot %>% dplyr::rename(humidity =`상대습도 (%)`)
 sdot <- sdot %>% dplyr::rename(lux =`조도 (lux)`)
 sdot <- sdot %>% dplyr::rename(db =`소음 (dB)`)
+sdot <- sdot %>% dplyr::rename(uvi = `자외선 (UVI)`)
 
 
 #사용하고자 하는 컬럼 선택 
-sdot <- sdot %>% dplyr::select(model, date, hour, dust,super_dust,temp,humidity, lux, db)
+sdot <- sdot %>% dplyr::select(model, date, hour, dust,super_dust,temp,humidity, lux, db, uvi)
 
 # 결측값 확인 
 plot_missing(sdot)
@@ -164,6 +165,10 @@ dlookr::plot_outlier(sdot, dust)
 ```{r, warning= FALSE, message=F }
 dlookr::plot_outlier(sdot, humidity)
 ```
+
+```{r, warning= FALSE, message=F }
+dlookr::plot_outlier(sdot, uvi)
+```
 ```{r, warning= FALSE, message=F }
 #시간에 따른 미세먼지 값 확인 
 #동적 그래프 생성규칙 
@@ -175,8 +180,8 @@ dlookr::plot_outlier(sdot, humidity)
 # plot_ly(sdot, x = ~hour, y = ~super_dust, name = 'trace 0', type = 'scatter', mode = 'markers',
 #         marker = list(opacity = 0.4, color = "red"))
 
-cor_heart <- cor(sdot[,3:8])
-
+cor_heart <- cor(sdot[,4:10])
+#sdot[,4:10]
 #상관관계 표현 그래프 1
 corrplot(cor_heart, method = "ellipse", type="upper",)
 ```
@@ -207,7 +212,7 @@ sdot_model <- merge(sdot, model, by ="model", all.x = TRUE)
 #경도 위도 이름 변경 및 사용데이터 결합
 sdot_model <- sdot_model %>% dplyr::rename(long = y, lat = x,gover = gover)
 
-sdot_model <- sdot_model %>% group_by(gover, model, hour) %>% summarise(long = mean(long), lat = mean(lat), super_dust = mean(super_dust), dust = mean(dust), temp = mean(temp), humidity=mean(humidity), lux = mean(lux), db= mean(db))
+sdot_model <- sdot_model %>% group_by(gover, model, hour) %>% summarise(long = mean(long), lat = mean(lat), super_dust = mean(super_dust), dust = mean(dust), temp = mean(temp), humidity=mean(humidity), lux = mean(lux), db= mean(db), uvi = mean(uvi))
 
 ```
 
@@ -234,7 +239,7 @@ seoul_map <- new_map[new_map$id <= 11740,]
 P_merge <- merge(seoul_map, p, by='id')
 P_merge <- P_merge %>% dplyr::rename(gover = 시군구명)
 
-top_stat_sdot<-sdot_model %>% group_by(gover, hour) %>% summarise(dust = mean(dust), super_dust = mean(super_dust), temp = mean(temp), humidity=mean(humidity), lux = mean(lux), db= mean(db))
+top_stat_sdot<-sdot_model %>% group_by(gover, hour) %>% summarise(dust = mean(dust), super_dust = mean(super_dust), temp = mean(temp), humidity=mean(humidity), lux = mean(lux), db= mean(db), uvi = mean(uvi))
 
 top_merge<-merge(P_merge, top_stat_sdot, by="gover", all.x =TRUE)
 
@@ -255,16 +260,25 @@ data_polys = SpatialPolygons(split_data_poly)
 
 
 
-```{r, warning= FALSE, message=F }
+```{r, warning= FALSE, message=F , fig.width = 10, fig.height=7}
+# 히스토그램 그리기 
 plot_histogram(sdot)
 ```
 
-```{r, warning= FALSE, message=F }
-plot_boxplot(sdot_model, by = "hour", theme_config = list(text=element_text(family="NanumGothic")))
+
+
+박스플롯 이해하기 
+
+![](data/read_boxplot.png)<!-- -->
+
+```{r, warning= FALSE, message=F , fig.width = 10, fig.height=7}
+#시간별 박스플롯 그리기 
+plot_boxplot(sdot_model %>% dplyr::select(lux,dust,hour,dust,super_dust,humidity,temp,db,uvi), by = "hour", theme_config = list(text=element_text(family="NanumGothic")))
 ```
 
 ```{r, warning= FALSE, message=F, fig.width = 10, fig.height=  15}
-plot_boxplot(sdot_model, by = "gover", theme_config = list(text=element_text(family="NanumGothic")))
+#자치구별 박스플롯 그리기 
+plot_boxplot(sdot_model %>% dplyr::select(lux,dust,super_dust,humidity,temp,db,uvi), by = "gover", theme_config = list(text=element_text(family="NanumGothic")))
 ```
 
 
@@ -372,15 +386,19 @@ biplot(data2_pca, cex = 0.8, choices = c(1,3))
 
 ```
 
-
+SDOT 850개 설치 주소(가상의 좌표)
 ```{r, warning= FALSE, message=F }
 
 #지도에 SDOT 설치 정보 뿌리기
 library(mapview)
 m <-leaflet(data_polys) %>%
+  # 지도 설정
   setView(lng=126.9784, lat=37.566, zoom=11) %>%
+  # 자치구 구역 지정 
   addPolygons(fillColor = "white",weight ="2",color = "black", opacity = 0.8   ) %>%
+  # 사용할 맵 스타일 
   addProviderTiles('CartoDB.Positron') %>%
+  # 좌표기준 데이터 그리기
   addCircleMarkers(data = sdot_model, lng=~long, lat=~lat, color="#20639B", radius = "2",stroke = TRUE, fillOpacity = 0.8, weight =1)
 
 saveWidget(m, "temp.html", selfcontained = FALSE)
@@ -388,10 +406,29 @@ webshot("temp.html", file = "Rplo1.png")
 
 ```
 
+
+S-DoT 850개 별 미세먼지 농도 
 ```{r, warning= FALSE, message=F }
 
-# 미세먼지 값 표시하기
-# 미세먼지 범례설정
+# #미세먼지 농도 지도에 표기하기 -> 색상표기 1색 
+# m  <-leaflet(data_polys) %>%
+#   setView(lng=126.9784, lat=37.566, zoom=11) %>%
+#   addPolygons(fillColor = "white",weight ="2",color = "black", opacity = 0.8  ) %>%
+#   addProviderTiles('CartoDB.Positron') %>%
+#   addCircleMarkers(data = mean_sdot_model, lat = ~lat, lng = ~long,
+#                    color = ~"red", popup = sdot_model$dust,
+#                    radius = ~sqrt(dust/3),  stroke = FALSE, fillOpacity = 0.1, )
+# 
+# saveWidget(m, "temp.html", selfcontained = FALSE)
+# webshot("temp.html", file = "Rplo2.png")
+
+```
+
+
+S-DoT 850개 별 미세먼지 농도(범례 설정)
+```{r, warning= FALSE, message=F }
+
+#미세먼지 농도 지도에 표기하기 - > 범례 설정 
 
 sdot_model$dust_range <- cut(sdot_model$dust,
                              c(0,30,80,150,999), include.lowest = T,
@@ -438,6 +475,10 @@ m<-leaflet(data_polys) %>%
                    radius = ~sqrt(dust/3),  stroke = FALSE, fillOpacity = 0.1, )
 
 saveWidget(m, "temp.html", selfcontained = FALSE)
-webshot("temp.html", file = "Rplo2.png")
+webshot("temp.html", file = "Rplo3.png")
 
 ```
+
+
+
+
